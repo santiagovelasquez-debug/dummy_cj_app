@@ -9,6 +9,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
 import android.util.Log
+import androidx.core.content.ContextCompat
 import java.util.concurrent.Executors
 
 class UsbHid constructor(
@@ -136,11 +137,17 @@ class UsbHid constructor(
         val connection = usbManager.openDevice(device)
         return if (connection == null) {
             val usbSerialPermissionIntent =
-                PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), 0)
+                PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION),
+                    PendingIntent.FLAG_IMMUTABLE)
             val usbPermissionIntentFilter = IntentFilter().apply {
                 addAction(ACTION_USB_PERMISSION)
             }
-            context.registerReceiver(usbPermissionReceiver, usbPermissionIntentFilter)
+            ContextCompat.registerReceiver(
+                context,
+                usbPermissionReceiver,
+                usbPermissionIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
             isRegisterUsbPermissionReceiver = true
             usbManager.requestPermission(device, usbSerialPermissionIntent)
             State.PermissionRequesting
