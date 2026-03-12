@@ -1,23 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:background="@drawable/cjclip_main"
+    tools:context=".MainActivity">
 
-    <Switch
-        android:id="@+id/switchControl"
-        android:layout_width="wrap_content"
-        android:layout_height="117dp"
-        android:text="pin drive not detected"
-        android:textColor="#E90C42"
-        android:textSize="20sp" />
+    <Space
+        android:id="@+id/space1"
+        android:layout_width="match_parent"
+        android:layout_height="70dp" />
 
-    <Button
-        android:id="@+id/button"
+    <!-- CONTENIDO CENTRAL -->
+
+    <!-- CONTENEDOR PARA LOS ELEMENTOS DE LA DERECHA -->
+    <!-- Este RelativeLayout se centrará verticalmente y se alineará a la derecha -->
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Exit" />
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="70dp">  <!-- Un margen para separarlo del borde -->
 
-</LinearLayout>
+        <!-- Ahora, todos tus elementos se posicionan RELATIVOS A ESTE CONTENEDOR -->
+
+
+        <TextView
+            android:id="@+id/text_view_status"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:background="@color/green2"
+            android:fontFamily="@font/gordita"
+            android:text="El CJCLIP es nuevo. Se requiere INICIALIZAR"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:textAlignment="center"
+
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/ButtonInitBlue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_view_status"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:visibility="gone"
+            android:background="@drawable/button_init" />
+        <Button
+            android:id="@+id/ButtonContinueGreen"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="70dp"
+            android:layout_below="@id/text_view_status"
+            android:visibility="invisible"
+            android:background="@drawable/button_green" />
+        <ImageView
+            android:id="@+id/imageViewNotdetected"
+            android:layout_width="290dp"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:src="@drawable/message_not_detected" />
+        <ImageView
+            android:id="@+id/imageViewExpired"
+            android:layout_width="290dp"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:src="@drawable/info_cjclip_expired" />
+
+
+        <!-- Los otros ImageViews y Buttons invisibles irían aquí también,
+             posicionados de manera relativa (ej. layout_below, layout_centerHorizontal) -->
+
+    </RelativeLayout>
+
+
+
+
+
+
+    <!-- PIE DE PÁGINA: TIEMPO RESTANTE (AGRUPADO) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+    <TextView
+        android:id="@+id/footer_text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/gordita_black"
+        android:text="TIEMPO RESTANTE: "
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:visibility="visible"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/footer_dias"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/gordita_black"
+        android:text="120 DÍAS"
+        android:textColor="@color/green"
+        android:visibility="visible"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- TEXTVIEW PARA EL NÚMERO DE VERSIÓN (AGREGADO) -->
+    <TextView
+        android:id="@+id/version_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        tools:text="v1.0.0" />
+
+
+
+</RelativeLayout>

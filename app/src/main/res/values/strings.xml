@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">App Base</string>
+    <string name="app_name">CJ CLIP</string>
+    <string name="not_detected">NO DETECTADO</string>
+    <string name="detected"> DETECTADO</string>
+    <string name="status">ESTADO</string>
+    <string name="active">ACTIVO</string>
+    <string name="expired">EXPIRADO</string>
+    <string name="virgin">INICIAL</string>
+    <string name="instructions">INSTRUCCIONES</string>
+    <string name="help_not_detected">Conecte en la entrada USB el accesorio CJCLIP que se encuentra en su maletin</string>
+    <string name="to_active_license">ACTIVAR MI LICENCIA</string>
+    <string name="serial_number">Numero de serie</string>
+    <string name="question_license">Deseas activar tu licencia</string>
+    <string name="yes">Si</string>
+    <string name="no">No</string>
+    <string name="exit">Salir</string>
+    <string name="remaining_hrs">HORAS DISPONIBLES</string>
+    <string name="hours">HORAS</string>
+    <string name="see_instructions">Ver instrucciones</string>
+    <string name="encabezado">Pantalla para activar aplicacion de diagnostico automotriz</string>
+    <string name="activar_aplicacion">Activar aplicacion de \ndiagnostico automotriz</string>
+    <string name="message_activate_app">Aplicacion del CJ9 ha\n sido activada</string>
+    <string name="salir_sin_activar">Salir sin activar</string>
+
+
+
+
 </resources>

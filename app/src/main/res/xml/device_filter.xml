@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Agrega aquí los detalles de tu dispositivo USB -->
+    <!-- <usb-device vendor-id="1234" product-id="5678" /> -->
+    <!-- CDC driver -->
+    <usb-device vendor-id="1155" product-id="22336" /><!-- 0x0483 / 0x5740: ST CDC -->
+</resources>
