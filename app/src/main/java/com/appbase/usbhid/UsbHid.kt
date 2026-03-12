@@ -272,6 +272,6 @@ class UsbHid constructor(
     companion object {
         private const val TAG = "UsbHid"
 
-        private const val ACTION_USB_PERMISSION = "com.github.yhirano.usbhid.USB_PERMISSION"
+        private const val ACTION_USB_PERMISSION = "com.appbase.usbhid.USB_PERMISSION"
     }
 }
