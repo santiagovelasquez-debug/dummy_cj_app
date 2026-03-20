@@ -16,8 +16,6 @@ import android.os.Handler;
 
 import androidx.annotation.RequiresApi;
 
-import com.appbase.OnUsbHidDeviceListener;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +44,13 @@ public class UsbHidDevice {
             if (ACTION_USB_PERMISSION.equals(action)) {
                 context.unregisterReceiver(this);
                 synchronized (this) {
-                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice device;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
+
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {
                         openDevice();
                     } else {
@@ -158,9 +162,18 @@ public class UsbHidDevice {
         mListener = listener;
         mHandler = new Handler(context.getMainLooper());
         if (!mUsbManager.hasPermission(mUsbDevice)) {
-            PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+            PendingIntent permissionIntent = PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    new Intent(ACTION_USB_PERMISSION),
+                    PendingIntent.FLAG_IMMUTABLE  // ← Fix for deprecated flag
+            );
             IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-            context.registerReceiver(mUsbReceiver, filter);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(mUsbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);  // ← Fix for API 33+
+            } else {
+                context.registerReceiver(mUsbReceiver, filter);
+            }
             mUsbManager.requestPermission(mUsbDevice, permissionIntent);
         } else {
             openDevice();

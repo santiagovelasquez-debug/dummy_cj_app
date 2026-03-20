@@ -21,8 +21,12 @@
     <string name="activar_aplicacion">Activar aplicacion de \ndiagnostico automotriz</string>
     <string name="message_activate_app">Aplicacion del CJ9 ha\n sido activada</string>
     <string name="salir_sin_activar">Salir sin activar</string>
-
-
+    <string name="select_connection_type">Select Connection Type</string>
+    <string name="choose_how_you_want_to_connect_to_the_device">Choose how you want to connect to the device</string>
+    <string name="usb_connection">USB Connection</string>
+    <string name="connect_to_device_via_usb_cable">Connect to device via USB cable</string>
+    <string name="validate_subscription">Validate Subscription</string>
+    <string name="verify_your_paid_subscription_to_access_premium_features">Verify your paid subscription to access cj9 features</string>
 
 
 </resources>

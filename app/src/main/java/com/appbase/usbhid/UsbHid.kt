@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
+import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.concurrent.Executors
@@ -88,7 +89,14 @@ class UsbHid constructor(
             addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
             addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
         }
-        context.registerReceiver(usbAttachReceiver, usbAttachIntentFilter)
+
+        // Use ContextCompat to support the RECEIVER_NOT_EXPORTED flag on older versions
+        ContextCompat.registerReceiver(
+            context,
+            usbAttachReceiver,
+            usbAttachIntentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         state = connect()
         return state
@@ -136,18 +144,32 @@ class UsbHid constructor(
 
         val connection = usbManager.openDevice(device)
         return if (connection == null) {
-            val usbSerialPermissionIntent =
-                PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION),
-                    PendingIntent.FLAG_IMMUTABLE)
+            // FIX 1: Add FLAG_MUTABLE and setPackage for security
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+            val intent = Intent(ACTION_USB_PERMISSION).apply {
+                setPackage(context.packageName)
+            }
+
+            val usbSerialPermissionIntent = PendingIntent.getBroadcast(context, 0, intent, flags)
+
             val usbPermissionIntentFilter = IntentFilter().apply {
                 addAction(ACTION_USB_PERMISSION)
             }
+
+            // FIX 2: Ensure the correct registerReceiver is used (already using ContextCompat,
+            // but ensure your context call is consistent)
             ContextCompat.registerReceiver(
                 context,
                 usbPermissionReceiver,
                 usbPermissionIntentFilter,
                 ContextCompat.RECEIVER_NOT_EXPORTED
             )
+
             isRegisterUsbPermissionReceiver = true
             usbManager.requestPermission(device, usbSerialPermissionIntent)
             State.PermissionRequesting
@@ -155,6 +177,7 @@ class UsbHid constructor(
             initPort(device, connection)
         }
     }
+
 
     private fun disconnect(): State {
         device = null

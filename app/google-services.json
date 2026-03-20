@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "315255002511",
+    "project_id": "app-compra-y-venta-ac8ec",
+    "storage_bucket": "app-compra-y-venta-ac8ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315255002511:android:9f664453e90a1e05fa67fa",
+        "android_client_info": {
+          "package_name": "com.appbase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpDBaTvjlTm6M8ClBKfp1Q1yFajFcppnk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
