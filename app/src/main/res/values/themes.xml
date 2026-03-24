@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.AppBase" parent="android:Theme.Material.Light.NoActionBar" />
-    <style name="Theme.AppBase.NoActionBar" parent="Theme.AppBase">
-    </style>
+    <!--
+        Style names kept exactly as AndroidManifest.xml expects:
+          - Theme.AppBase              → used by Application, SelectionActivity, MainActivity
+          - Theme.AppBase.NoActionBar  → used by SplashActivity
+
+        Only the parent was changed:
+          android:Theme.Material.Light.NoActionBar  (AOSP — no ?attr/colorSurface)
+          →  Theme.MaterialComponents.DayNight.NoActionBar  (AndroidX — full Material attrs)
+    -->
+    <style name="Theme.AppBase" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <style name="Theme.AppBase.NoActionBar" parent="Theme.AppBase" />
+
 </resources>

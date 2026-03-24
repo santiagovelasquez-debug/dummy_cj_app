@@ -9,6 +9,10 @@ import com.appbase.ui.subscription.SubscriptionViewModel
 import com.appbase.util.DeviceIdProvider
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 
 /**
  * Hub activity that allows users to choose between two connection modes:
@@ -75,8 +79,8 @@ class SelectionActivity : ComponentActivity() {
 
         // Trigger subscription verification via REST API
         btnSubscription.setOnClickListener {
-            // Triggers GET /api/verify-access/:deviceId
-            subscriptionViewModel.verifyAccess(deviceId)
+        // Triggers GET /api/verify-access/:deviceId
+        subscriptionViewModel.verifyAccess(deviceId)
         }
     }
 
@@ -141,7 +145,94 @@ class SelectionActivity : ComponentActivity() {
     }
 
     // ─── Dialogs ──────────────────────────────────────────────────────────────
+    /**
+     * Verifica si una aplicación está corriendo.
+     * @param packageName El nombre del paquete (e.g., "com.diag.scan")
+     * @return true si la app está corriendo, false si no
+     */
+    private fun isAppRunning(packageName: String): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningApps = activityManager.runningAppProcesses ?: return false
 
+        return runningApps.any { it.processName == packageName }
+    }
+
+    /**
+     * Verifica si una aplicación está en primer plano (visible al usuario).
+     */
+    private fun isAppInForeground(packageName: String): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningApps = activityManager.runningAppProcesses ?: return false
+
+        return runningApps.any {
+            it.processName == packageName &&
+                    it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+        }
+    }
+
+    /**
+     * Closes an external application by package name.
+     * Requires KILL_BACKGROUND_PROCESSES permission.
+     */
+    private fun closeExternalApp(packageName: String) {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        activityManager.killBackgroundProcesses(packageName)
+    }
+    private fun forceStopApp(packageName: String) {
+        try {
+            Runtime.getRuntime().exec(arrayOf("su", "-c", "am force-stop $packageName"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun killBackgroundApp(packageName: String) {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        activityManager.killBackgroundProcesses(packageName)
+    }
+    /**
+     * Verifica si el dispositivo tiene acceso root.
+     */
+    private fun isDeviceRooted(): Boolean {
+        // Método 1: Verificar si existe el binario 'su'
+        val paths = arrayOf(
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/sbin/su",
+            "/system/su",
+            "/system/bin/.ext/.su",
+            "/system/usr/we-need-root/su",
+            "/system/app/Superuser.apk",
+            "/data/local/xbin/su",
+            "/data/local/bin/su",
+            "/data/local/su"
+        )
+
+        for (path in paths) {
+            if (java.io.File(path).exists()) {
+                return true
+            }
+        }
+
+        // Método 2: Intentar ejecutar 'su'
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "id"))
+            val exitCode = process.waitFor()
+            exitCode == 0
+        } catch (e: Exception) {
+            false
+        }
+    }
+    private fun openAppSettings(packageName: String) {
+        try {
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
     /**
      * Displays a success dialog when the device has an active subscription.
      * Shows subscription details (plan name, remaining days) and allows
@@ -157,7 +248,26 @@ class SelectionActivity : ComponentActivity() {
             .setMessage("$message\n\nPlan: $plan\nDías restantes: $remainingDays")
             .setPositiveButton("Continuar") { _, _ ->
                 // Launch the external app that requires subscription
-                launchExternalApp("com.appdependiente")
+                StateProvider.pin_drive_status = true
+
+//                    // La app está corriendo
+//                if (isDeviceRooted()) {
+//                    // Tiene root - puedes usar force-stop
+//                    forceStopApp("com.diag.scan")
+//                } else {
+//                    // No tiene root - mostrar mensaje o abrir configuración
+//                    //openAppSettings("com.diag.scan")
+//                    killBackgroundApp("com.diag.scan")
+//                }
+               // openAppSettings("com.diag.scan")
+
+
+//                if (isAppInForeground("com.diag.scan")) {
+//                    // La app está visible al usuario
+//                }
+                // Cerrar la app externa en lugar de abrirla
+                //closeExternalApp("com.diag.scan")
+                launchExternalApp("com.diag.scan")
                 // Reset ViewModel state to Idle for next interaction
                 subscriptionViewModel.resetState()
             }

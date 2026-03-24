@@ -57,11 +57,27 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // ── Material Components — required for ?attr/colorSurface and Toolbar styling
+    implementation("com.google.android.material:material:1.12.0")
+
+    // ── Retrofit ──────────────────────────────────────────────────────────────
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // ── Coroutines ────────────────────────────────────────────────────────────
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("io.insert-koin:koin-androidx-compose:3.5.3")
+
+    // ── Koin ──────────────────────────────────────────────────────────────────
+    // koin-android   → provides by viewModel() for regular Activities/Fragments
+    // koin-androidx-compose → provides koinViewModel() for Compose screens
+    // REMOVED: koin-androidx-compose alone is NOT enough for Activity-based viewModel()
+    implementation("io.insert-koin:koin-android:3.5.3")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.3")  // keep if you use Compose too
+
+    // ── Chrome Custom Tab / WebView ───────────────────────────────────────────
     implementation("androidx.browser:browser:1.8.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

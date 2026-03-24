@@ -1,6 +1,7 @@
 package com.appbase.data.repository
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 import com.appbase.data.model.VerifyAccessResponse
@@ -41,9 +42,19 @@ class SubscriptionRepositoryImpl(
             .appendQueryParameter("appVersion", appVersion)
             .build()
 
-        CustomTabsIntent.Builder()
-            .build()
-            .launchUrl(context, url)
+        // Abrir en Edge específicamente
+        val intent = Intent(Intent.ACTION_VIEW, url).apply {
+            setPackage("com.microsoft.emmx") // Edge
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+        
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            // Fallback si Edge no está
+            val fallback = Intent(Intent.ACTION_VIEW, url)
+            context.startActivity(fallback)
+        }
     }
 
     companion object {

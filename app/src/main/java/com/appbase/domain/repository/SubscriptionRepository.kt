@@ -9,8 +9,15 @@ interface SubscriptionRepository {
     suspend fun verifyAccess(deviceId: String): Result<VerifyAccessResponse>
 
     /**
-     * Opens /api/prepare-device in a Chrome Custom Tab.
-     * This is the full payment/renewal web flow.
+     * Opens the payment/renewal flow inside the app using a WebView.
+     * Launches PaymentWebViewActivity — user stays inside the app.
+     * On payment completion the server redirects to a known URL and
+     * PaymentWebViewActivity intercepts it, then returns to SelectionActivity.
+     *
+     * @param context     Activity context required to launch the Activity
+     * @param deviceId    Unique device identifier
+     * @param deviceName  e.g. Build.MODEL
+     * @param appVersion  e.g. BuildConfig.VERSION_NAME
      */
     fun openPaymentFlow(
         context: Context,
