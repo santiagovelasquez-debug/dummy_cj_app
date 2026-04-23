@@ -1,0 +1,9 @@
+<!-- res/layout/dialog_message.xml -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialogMessage"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/holo_red_dark"
+    android:textColor="@android:color/white"
+    android:padding="16dp"
+    android:text="Este es el mensaje"/>

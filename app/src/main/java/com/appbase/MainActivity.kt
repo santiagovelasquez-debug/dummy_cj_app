@@ -1,6 +1,7 @@
 package com.appbase
 
 
+import com.appbase.util.launchExternalApp
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.icu.util.Calendar
@@ -81,10 +82,12 @@ class MainActivity : ComponentActivity() {
                     2 -> {
                         show_cjclip_not_expired()
                         Log.d("UI", "show_cjclip_not_expired()")
-                        buttonContinueGreen.setOnClickListener {
-                            StateProvider.pin_drive_status = true
-                            finish()
-                        }
+                        StateProvider.pin_drive_status = true
+                        launchExternalApp("com.diag.scan", finishAfterLaunch = true)
+//                        buttonContinueGreen.setOnClickListener {
+//                            StateProvider.pin_drive_status = true
+//                            launchExternalApp("com.diag.scan", finishAfterLaunch = true)
+//                        }
                     }
 
                     0 -> {

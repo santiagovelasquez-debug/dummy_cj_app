@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CJ CLIP</string>
+    <string name="app_name">CJApp</string>
     <string name="not_detected">NO DETECTADO</string>
     <string name="detected"> DETECTADO</string>
     <string name="status">ESTADO</string>
@@ -21,12 +21,17 @@
     <string name="activar_aplicacion">Activar aplicacion de \ndiagnostico automotriz</string>
     <string name="message_activate_app">Aplicacion del CJ9 ha\n sido activada</string>
     <string name="salir_sin_activar">Salir sin activar</string>
-    <string name="select_connection_type">Select Connection Type</string>
-    <string name="choose_how_you_want_to_connect_to_the_device">Choose how you want to connect to the device</string>
-    <string name="usb_connection">USB Connection</string>
-    <string name="connect_to_device_via_usb_cable">Connect to device via USB cable</string>
-    <string name="validate_subscription">Validate Subscription</string>
-    <string name="verify_your_paid_subscription_to_access_premium_features">Verify your paid subscription to access cj9 features</string>
+    <string name="select_connection_type">Seleccione el tipo de conexión </string>
+    <string name="choose_how_you_want_to_connect_to_the_device">Elija como desea validar su subscripcion</string>
+    <string name="demo_mode_select_device_id">Modo Demo - Seleccione el SN del dispositivo:</string>
+    <string name="usb_connection">CJCLIP USB</string>
+    <string name="connect_to_device_via_usb_cable">Conecte el CJCLIP a la entrada USB</string>
+    <string name="validate_subscription">Subscripción válida</string>
+    <string name="verify_your_paid_subscription_to_access_premium_features">Verifique su suscripción pagada para acceder a las funciones de su CJ9PRO</string>
+    <string name="determina_si_el_serial_number_ingresado_tiene_una_licencia_vigente">Determina si el numero de serie ingresado tiene una licencia vigente</string>
+    <string name="ingresa_serial_number_manualmente_para_verificar_su_licencia">Numero de Serie</string>
+    <string name="demo_verificar_licencia">Verificar Licencia</string>
+    <string name="verificar_licencia">Verificar Licencia</string>
 
 
 </resources>

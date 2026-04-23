@@ -2,6 +2,8 @@ package com.appbase
 
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.appbase.ui.subscription.SubscriptionUiState
@@ -13,6 +15,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.appbase.util.launchExternalApp  // Add this import
 
 /**
  * Hub activity that allows users to choose between two connection modes:
@@ -26,6 +29,7 @@ class SelectionActivity : ComponentActivity() {
 
     private lateinit var btnUsbConnection: Button
     private lateinit var btnSubscription: Button
+    private lateinit var spinnerDeviceId: Spinner
 
     /**
      * ViewModel injected by Koin dependency injection framework.
@@ -39,55 +43,89 @@ class SelectionActivity : ComponentActivity() {
      * Lazily initialized using DeviceIdProvider which:
      * - Primarily uses ANDROID_ID (stable per app installation)
      * - Falls back to a generated UUID if ANDROID_ID is unavailable
-     * 
+     *
      * This ID is sent to the server to check if the device has an active subscription.
      */
     private val deviceId: String by lazy { DeviceIdProvider.getDeviceId(this) }
+
+    // Demo device IDs for testing
+    private val demoDeviceIds = listOf(
+        "DEMO-CJ9Mxbf000001",
+        "DEMO-CJ9Mxbf000002",
+        "DEMO-CJ9Mxbf000003",
+        "DEMO-CJ9Mxbf000004",
+        "DEMO-CJ9Mxbf000005",
+        "DEMO-CJ9Mxbf000006",
+        "DEMO-CJ9Mxbf000007",
+        "DEMO-CJ9Mxbf000008",
+        "DEMO-CJ9Mxbf000009",
+        "DEMO-CJ9Mxbf000010"
+    )
+
+    // Selected device ID from spinner (defaults to first item)
+    private var selectedDeviceId: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_selection)
 
         initializeViews()
+        setupDeviceIdSpinner()
         setupClickListeners()
         observeSubscriptionState()
     }
 
-    /**
-     * Binds UI elements to their corresponding view references.
-     * Called once during onCreate to cache button references for later use.
-     */
     private fun initializeViews() {
         btnUsbConnection = findViewById(R.id.btnUsbConnection)
         btnSubscription  = findViewById(R.id.btnSubscription)
+        spinnerDeviceId = findViewById(R.id.spinnerDeviceId)
     }
 
-    /**
-     * Configures click handlers for both navigation options.
-     * 
-     * USB Connection button: Directly navigates to MainActivity for
-     * hardware-based dongle verification.
-     * 
-     * Subscription button: Initiates an API call to verify if the
-     * device has an active cloud subscription.
-     */
+    private fun setupDeviceIdSpinner() {
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            demoDeviceIds
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerDeviceId.adapter = adapter
+
+        // Set default selection
+        selectedDeviceId = demoDeviceIds[0]
+
+        spinnerDeviceId.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: android.widget.AdapterView<*>?,
+                view: android.view.View?,
+                position: Int,
+                id: Long
+            ) {
+                selectedDeviceId = demoDeviceIds[position]
+            }
+
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                selectedDeviceId = demoDeviceIds[0]
+            }
+        }
+    }
+
     private fun setupClickListeners() {
         // Navigate to USB dongle verification screen
         btnUsbConnection.setOnClickListener {
             startActivity(android.content.Intent(this, MainActivity::class.java))
         }
 
-        // Trigger subscription verification via REST API
+        // Trigger subscription verification via REST API using selected demo device ID
         btnSubscription.setOnClickListener {
-        // Triggers GET /api/verify-access/:deviceId
-        subscriptionViewModel.verifyAccess(deviceId)
+            // Use the selected device ID from spinner instead of real device ID
+            subscriptionViewModel.verifyAccess(selectedDeviceId)
         }
     }
 
     /**
      * Sets up a coroutine-based observer for subscription state changes.
      * Uses lifecycleScope to automatically cancel collection when activity is destroyed.
-     * 
+     *
      * Reacts to the following states from SubscriptionViewModel:
      * - Idle: Initial state, no action needed
      * - Loading: API call in progress, disable button and show loading text
@@ -237,7 +275,7 @@ class SelectionActivity : ComponentActivity() {
      * Displays a success dialog when the device has an active subscription.
      * Shows subscription details (plan name, remaining days) and allows
      * the user to proceed to the external dependent application.
-     * 
+     *
      * @param plan The subscription plan name (e.g., "Premium", "Basic")
      * @param remainingDays Number of days until subscription expires
      * @param message Server-provided confirmation message
@@ -247,28 +285,8 @@ class SelectionActivity : ComponentActivity() {
             .setTitle("✅ Acceso Activo")
             .setMessage("$message\n\nPlan: $plan\nDías restantes: $remainingDays")
             .setPositiveButton("Continuar") { _, _ ->
-                // Launch the external app that requires subscription
                 StateProvider.pin_drive_status = true
-
-//                    // La app está corriendo
-//                if (isDeviceRooted()) {
-//                    // Tiene root - puedes usar force-stop
-//                    forceStopApp("com.diag.scan")
-//                } else {
-//                    // No tiene root - mostrar mensaje o abrir configuración
-//                    //openAppSettings("com.diag.scan")
-//                    killBackgroundApp("com.diag.scan")
-//                }
-               // openAppSettings("com.diag.scan")
-
-
-//                if (isAppInForeground("com.diag.scan")) {
-//                    // La app está visible al usuario
-//                }
-                // Cerrar la app externa en lugar de abrirla
-                //closeExternalApp("com.diag.scan")
-                launchExternalApp("com.diag.scan")
-                // Reset ViewModel state to Idle for next interaction
+                launchExternalApp("com.diag.scan")  // Uses extension function
                 subscriptionViewModel.resetState()
             }
             .setCancelable(false)
@@ -287,7 +305,10 @@ class SelectionActivity : ComponentActivity() {
             .setMessage("No se encontró suscripción para este dispositivo.\n\n¿Deseas suscribirte ahora?")
             .setPositiveButton("Suscribirse") { _, _ ->
                 // Open external payment flow (e.g., web browser with payment page)
-                subscriptionViewModel.openPaymentFlow(this, deviceId)
+//                subscriptionViewModel.openPaymentFlow(this, deviceId)
+                //demo
+                StateProvider.pin_drive_status = false
+                subscriptionViewModel.openPaymentFlow(this, selectedDeviceId)
                 subscriptionViewModel.resetState()
             }
             .setNegativeButton("Cancelar") { _, _ ->
@@ -300,7 +321,7 @@ class SelectionActivity : ComponentActivity() {
     /**
      * Displays a dialog when the subscription has expired.
      * Shows the expiration date if available and offers renewal options.
-     * 
+     *
      * @param expiredAt ISO date string of when the subscription expired (nullable)
      */
     private fun showExpiredDialog(expiredAt: String?) {
@@ -311,8 +332,11 @@ class SelectionActivity : ComponentActivity() {
             .setMessage("Tu suscripción ha expirado.$expiredMessage\n\n¿Deseas renovarla ahora?")
             .setPositiveButton("Renovar") { _, _ ->
                 // Open payment flow for subscription renewal
-                subscriptionViewModel.openPaymentFlow(this, deviceId)
+//                subscriptionViewModel.openPaymentFlow(this, deviceId)
+                StateProvider.pin_drive_status = false
+                subscriptionViewModel.openPaymentFlow(this, selectedDeviceId)
                 subscriptionViewModel.resetState()
+
             }
             .setNegativeButton("Cancelar") { _, _ ->
                 subscriptionViewModel.resetState()
@@ -325,7 +349,7 @@ class SelectionActivity : ComponentActivity() {
      * Displays an error dialog when subscription verification fails.
      * This typically occurs due to network issues or server errors.
      * Offers retry functionality to attempt verification again.
-     * 
+     *
      * @param message Error description from the ViewModel (e.g., "No internet connection")
      */
     private fun showErrorDialog(message: String) {
@@ -334,7 +358,10 @@ class SelectionActivity : ComponentActivity() {
             .setMessage("No se pudo verificar la suscripción.\n\n$message")
             .setPositiveButton("Reintentar") { _, _ ->
                 // Retry the verification with the same device ID
-                subscriptionViewModel.verifyAccess(deviceId)
+//                subscriptionViewModel.verifyAccess(deviceId)
+                //demo
+                StateProvider.pin_drive_status = false
+                subscriptionViewModel.verifyAccess(selectedDeviceId)
             }
             .setNegativeButton("Cancelar") { _, _ ->
                 subscriptionViewModel.resetState()
@@ -348,25 +375,25 @@ class SelectionActivity : ComponentActivity() {
      * Attempts to launch an external application by its package name.
      * Used to open the dependent app (com.appdependiente) after subscription
      * verification succeeds.
-     * 
+     *
      * If the target app is not installed, shows an informative error dialog
      * instead of crashing.
-     * 
+     *
      * @param packageName The package name of the app to launch (e.g., "com.appdependiente")
      */
-    private fun launchExternalApp(packageName: String) {
-        // Get launch intent for the specified package
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            // App is installed - launch it
-            startActivity(intent)
-        } else {
-            // App not found - show error dialog
-            android.app.AlertDialog.Builder(this)
-                .setTitle("App No Encontrada")
-                .setMessage("La aplicación requerida no está instalada en este dispositivo.")
-                .setPositiveButton("OK", null)
-                .show()
-        }
-    }
+//    private fun launchExternalApp(packageName: String) {
+//        // Get launch intent for the specified package
+//        val intent = packageManager.getLaunchIntentForPackage(packageName)
+//        if (intent != null) {
+//            // App is installed - launch it
+//            startActivity(intent)
+//        } else {
+//            // App not found - show error dialog
+//            android.app.AlertDialog.Builder(this)
+//                .setTitle("App No Encontrada")
+//                .setMessage("La aplicación requerida no está instalada en este dispositivo.")
+//                .setPositiveButton("OK", null)
+//                .show()
+//        }
+//    }
 }
