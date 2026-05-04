@@ -1,8 +1,11 @@
 package com.appbase
 
 import android.content.Intent
-import android.os.Bundle
 import android.os.Handler
+import android.content.Context
+import android.hardware.usb.UsbConstants
+import android.hardware.usb.UsbManager
+import android.os.Bundle
 import android.os.Looper
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -22,6 +25,10 @@ class SplashActivity : ComponentActivity() {
     // Vendor ID and Product ID for the CJ Clip device
     private val CJ_CLIP_VID = 0x0483 // Replace with actual VID
     private val CJ_CLIP_PID = 0x5750 // Replace with actual PID
+
+    private val TEMP_VID = 0x0951 // Kingston
+    private val TEMP_PID = 0x1666 // DataTraveler
+    private val TARGET_SERIAL = "E0D55E55CCF6E651E9550238"
     
     private val subscriptionViewModel: SubscriptionViewModel by viewModel()
     private val deviceId: String by lazy { DeviceIdProvider.getDeviceId(this) }
@@ -45,12 +52,42 @@ class SplashActivity : ComponentActivity() {
 
         // Observe subscription state for automatic navigation
         //observeSubscriptionState()
+        // Si la Kingston ya está conectada, lanzar de inmediato sin esperar el timeout
+        if (isKingstonDriveConnected()) {
+            showCJClipAccessGrantedDialog()
+
+            return
+        }
 
         Handler(Looper.getMainLooper()).postDelayed({
             //checkCjClipAndProceed()
             startActivity(Intent(this, DemoActivity::class.java))
             finish()
         }, SPLASH_TIME_OUT)
+    }
+
+    private fun showCJClipAccessGrantedDialog() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("✅ CJClip detectado")
+            .setIcon(R.drawable.background_status_active)
+
+            .setPositiveButton("Continuar") { _, _ ->
+
+                StateProvider.pin_drive_status = true
+                launchExternalApp(
+                    packageName = "com.diag.scan",
+                    finishAfterLaunch = true,
+                    onAppNotFound = {
+                        // fallback: continuar con splash o navegar a selección
+                         startActivity(Intent(this, DemoActivity::class.java))
+
+                        finish()
+                    }
+                )
+
+            }
+            .setCancelable(false)
+            .show()
     }
 
     /**
@@ -67,6 +104,69 @@ class SplashActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Checks if temporary drive is connected. If not, verifies subscription.
+     * If subscription is granted, launches external app directly.
+     */
+    private fun checkDriveTempAndProceed() {
+        if (isKingstonDriveConnected()) {
+            // Drive is connected - go to selection activity
+            //navigateToSelection()
+            StateProvider.pin_drive_status = true
+            launchExternalApp("com.diag.scan", finishAfterLaunch = true)
+        } else {
+            // CJ Clip not connected - check subscription
+            //subscriptionViewModel.verifyAccess(demoDeviceId)//deviceId)
+        }
+    }
+
+    /**
+     * Checks if the Kingston Mass Storage USB device is connected.
+     * Matches by VID/PID and optionally by serial number.
+     */
+    private fun isKingstonDriveConnected(): Boolean {
+        return try {
+            val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+            val devices = usbManager.deviceList
+
+            android.util.Log.d("SplashActivity", "USB devices found: ${devices.size}")
+            devices.values.forEach { d ->
+                android.util.Log.d(
+                    "SplashActivity",
+                    "Device: name=${d.deviceName}, VID=0x%04X, PID=0x%04X, class=${d.deviceClass}"
+                        .format(d.vendorId, d.productId)
+                )
+            }
+
+            val match = devices.values.firstOrNull { device ->
+                device.vendorId == TEMP_VID &&
+                device.productId == TEMP_PID &&
+                hasMassStorageInterface(device)
+            } ?: return false
+
+            // Optional: validate serial (requires USB permission on Android)
+            if (usbManager.hasPermission(match)) {
+                val serial = try { match.serialNumber } catch (e: SecurityException) { null }
+                android.util.Log.d("SplashActivity", "Matched device serial=$serial")
+                // If you want to strictly require a specific serial, uncomment:
+                // return serial == TARGET_SERIAL
+            }
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun hasMassStorageInterface(device: android.hardware.usb.UsbDevice): Boolean {
+        for (i in 0 until device.interfaceCount) {
+            if (device.getInterface(i).interfaceClass == UsbConstants.USB_CLASS_MASS_STORAGE) {
+                return true
+            }
+        }
+        return false
+    }
     /**
      * Checks if the CJ Clip USB HID device is connected.
      */

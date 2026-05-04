@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import android.database.Cursor
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+
+
 /**
  * Demo activity that allows manual entry of a Device ID to verify subscription status.
  * The user inputs a device ID manually via an EditText, and the app verifies
@@ -34,8 +36,7 @@ class DemoActivity : ComponentActivity() {
 
     private lateinit var etDeviceId: TextInputEditText
     private lateinit var btnVerifySubscription: Button
-    private lateinit var btnReadSerialNumber: Button
-    private lateinit var texttvSN: TextView
+
 
     /**
      * ViewModel injected by Koin dependency injection framework.
@@ -52,15 +53,58 @@ class DemoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_demo)
 
-        if (!isInternetAvailable(this)) {
+        if (isInternetAvailable(this)) {
 
         } else {
             //Use token info to validate the device
             showErrorDialog2()
+            return
         }
         initializeViews()
         setupClickListeners()
         observeSubscriptionState()
+        loadSerialNumber()
+    }
+
+    /**
+     * Intenta leer el número de serie del VCI al iniciar la actividad.
+     * - Si se obtiene correctamente, actualiza `etDeviceId` con el número de serie
+     *   y lo deja deshabilitado para edición.
+     * - Si no se puede obtener, habilita `etDeviceId` para que el usuario lo
+     *   ingrese manualmente.
+     */
+    private fun loadSerialNumber() {
+        // Deshabilitamos temporalmente el campo mientras se intenta leer el serial
+        etDeviceId.isEnabled = false
+        etDeviceId.hint = "Leyendo número de serie..."
+
+        lifecycleScope.launch {
+            val serialNumber = getVCISerialNumber()
+
+            if (!serialNumber.isNullOrEmpty()) {
+                // ✅ Serial obtenido: actualizamos el campo y lo bloqueamos
+                manualDeviceId = serialNumber
+                etDeviceId.setText(serialNumber)
+                etDeviceId.isEnabled = false
+                etDeviceId.hint = "Número de serie del VCI"
+                Toast.makeText(
+                    this@DemoActivity,
+                    "Número de serie obtenido: $serialNumber",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                // ❌ No se pudo obtener: habilitamos edición manual
+                etDeviceId.setText("")
+                etDeviceId.isEnabled = true
+                etDeviceId.hint = "Ingrese el número de serie manualmente"
+                etDeviceId.requestFocus()
+                Toast.makeText(
+                    this@DemoActivity,
+                    "No se pudo obtener el número de serie. Ingréselo manualmente.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun isInternetAvailable(context: Context): Boolean {
@@ -73,11 +117,10 @@ class DemoActivity : ComponentActivity() {
     private fun initializeViews() {
         etDeviceId = findViewById(R.id.etDeviceId)
         btnVerifySubscription = findViewById(R.id.btnVerifySubscription)
-        btnReadSerialNumber= findViewById(R.id.button_get_sn)
-        texttvSN = findViewById(R.id.tv_sn)
     }
 
     private fun setupClickListeners() {
+
         // Trigger subscription verification via REST API using manually entered device ID
         btnVerifySubscription.setOnClickListener {
             verifyLicense()
@@ -93,22 +136,83 @@ class DemoActivity : ComponentActivity() {
             }
         }
 
-        btnReadSerialNumber.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.Main) {
 
-                texttvSN.text = "Reading serial number, please wait..."
-
-                val serialNumber = getVCISerialNumber()
-
-                if (serialNumber.isNullOrEmpty()) {
-                    texttvSN.text = "CJ9PRO app unbound VCI, "
-                } else {
-                    texttvSN.text = serialNumber
-                }
-            }
-        }
     }
-    private suspend fun getVCISerialNumber() = withContext(Dispatchers.IO) {
+//    private fun verifyLicense() {
+//        val deviceId = etDeviceId.text?.toString()?.trim().orEmpty()
+//
+//        if (deviceId.isEmpty()) {
+//            Toast.makeText(
+//                this,
+//                "Por favor ingrese el número de serie",
+//                Toast.LENGTH_SHORT
+//            ).show()
+//            return
+//        }
+//
+//        manualDeviceId = deviceId
+//
+//        if (isInternetAvailable(this)) {
+//            // 🌐 Con internet: validación normal contra el servidor
+//            subscriptionViewModel.verifyAccess(manualDeviceId)
+//        } else {
+//            // 📴 Sin internet: validamos el JWT almacenado localmente
+//            verifyLicenseOffline(manualDeviceId)
+//        }
+//    }
+    /**
+     * Valida la licencia usando el JWT previamente almacenado cuando no hay internet.
+     * - Si el token es válido y no ha expirado → muestra `showAccessGrantedDialog`.
+     * - Si el token expiró → muestra `showExpiredDialog`.
+     * - Si no hay token o no corresponde al deviceId → muestra `showErrorDialog2`.
+     */
+//    private fun verifyLicenseOffline(deviceId: String) {
+//        val result = JwtTokenStore.validateOffline(this, deviceId)
+//
+//        when {
+//            result.valid -> {
+//                showAccessGrantedDialog(
+//                    plan = result.plan ?: "Licencia almacenada",
+//                    remainingDays = result.remainingDays,
+//                    message = "Validación offline: licencia vigente (sin conexión a internet)."
+//                )
+//            }
+//            result.reason == "expired" -> {
+//                showExpiredDialog(result.expiredAt)
+//            }
+//            result.reason == "clock_tampered" -> {
+//                // El reloj del dispositivo retrocedió → pedimos revalidación online
+//                showErrorDialog(
+//                    "Se detectó un cambio en la fecha/hora del dispositivo.\n" +
+//                            "Conéctate a internet para revalidar la licencia."
+//                )
+//            }
+//            else -> {
+//                // No hay token almacenado, device_mismatch, invalid_token, etc.
+//                showErrorDialog2()
+//            }
+//        }
+//    }
+
+    private fun verifyLicense() {
+        val deviceId = etDeviceId.text?.toString()?.trim().orEmpty()
+
+        if (deviceId.isEmpty()) {
+            Toast.makeText(
+                this,
+                "Por favor ingrese el número de serie",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        manualDeviceId = deviceId
+        // Verify subscription with the full device ID
+        subscriptionViewModel.verifyAccess(manualDeviceId)
+    }
+    private suspend fun getVCISerialNumber() = withContext(Dispatchers.IO)
+    //private  fun getVCISerialNumber()
+    {
         val cursor: Cursor? = contentResolver.query(
             Uri.parse("content://com.diag.scan/vci"),
             null, null, null, null
@@ -121,33 +225,6 @@ class DemoActivity : ComponentActivity() {
         } else {
             null
         }
-    }
-
-    private fun verifyLicense() {
-
-        val suffix = etDeviceId.text?.toString()?.trim() ?: ""
-
-        if (suffix.isEmpty()) {
-            Toast.makeText(this, "Por favor ingresa el número de serie", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Always prepend the fixed prefix
-//        manualDeviceId = "CJ9MXbf$suffix"
-        manualDeviceId = "$suffix"
-
-        // Verify subscription with the full device ID
-        subscriptionViewModel.verifyAccess(manualDeviceId)
-
-//        manualDeviceId = etDeviceId.text?.toString()?.trim() ?: ""
-//
-//        if (manualDeviceId.isEmpty()) {
-//            Toast.makeText(this, "Por favor ingresa un Device ID", Toast.LENGTH_SHORT).show()
-//            return
-//        }
-//
-//        // Verify subscription with the manually entered device ID
-//        subscriptionViewModel.verifyAccess(manualDeviceId)
     }
 
     /**
@@ -181,6 +258,7 @@ class DemoActivity : ComponentActivity() {
                         // Re-enable button and restore label
                         btnVerifySubscription.isEnabled = true
                         btnVerifySubscription.text = "Verificar Licencia"
+
                         // ✅ Active subscription — show details and offer to launch external app
                         showAccessGrantedDialog(state.plan, state.remainingDays, state.message)
                     }

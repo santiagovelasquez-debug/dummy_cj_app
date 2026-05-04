@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CJApp</string>
+    <string name="app_name">CJLicencia</string>
     <string name="not_detected">NO DETECTADO</string>
     <string name="detected"> DETECTADO</string>
     <string name="status">ESTADO</string>
